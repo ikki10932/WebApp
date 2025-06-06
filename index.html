@@ -24,17 +24,17 @@
             max-width: 600px; /* Increased max-width for better layout */
             width: 100%;
             background-color: #ffffff;
-            padding: 2.5rem; /* Increased padding */
+            padding: 2rem; /* Adjusted padding for more compactness */
             border-radius: 1rem; /* More rounded corners */
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* Softer shadow */
             display: flex;
             flex-direction: column;
-            gap: 1.5rem; /* Space between sections */
+            gap: 1.25rem; /* Slightly reduced space between sections for compactness */
         }
         .form-group label {
             font-weight: 600; /* Semi-bold labels */
             color: #334155; /* Darker text for labels */
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.4rem; /* Slightly reduced margin */
             display: block; /* Make label a block element for spacing */
         }
         .form-group input[type="text"],
@@ -52,14 +52,6 @@
             outline: none;
             border-color: #60a5fa; /* Blue focus border */
             box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.3); /* Blue focus shadow */
-        }
-        .gender-options {
-            display: flex;
-            gap: 1.5rem; /* Space between radio buttons */
-            margin-top: 0.5rem;
-        }
-        .gender-options input[type="radio"] {
-            margin-right: 0.5rem;
         }
         .generate-button {
             background-color: #3b82f6; /* Blue button */
@@ -112,26 +104,33 @@
         }
         /* Responsive adjustments */
         @media (max-width: 480px) {
+            body {
+                padding: 10px; /* Reduced padding for very small screens */
+            }
             .container {
-                padding: 1.5rem;
+                padding: 1rem; /* More aggressive padding reduction */
                 border-radius: 0.75rem;
+                gap: 1rem; /* Further reduced gap */
+            }
+            .form-group label {
+                margin-bottom: 0.3rem; /* Smallest margin */
             }
             .form-group input[type="text"],
             .form-group textarea,
             .generate-button {
-                font-size: 0.95rem;
-                padding: 0.65rem 1rem;
+                font-size: 0.9rem; /* Slightly smaller font for inputs/button */
+                padding: 0.6rem 0.8rem; /* Adjusted padding */
             }
             .result-box {
                 font-size: 1rem;
-                padding: 1.25rem;
+                padding: 1rem;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-4 md:mb-6">
             ✨ あなたのキャッチフレーズを生成！ ✨
         </h1>
 
@@ -140,17 +139,7 @@
             <input type="text" id="name" placeholder="例: 山田 太郎" class="shadow-sm">
         </div>
 
-        <div class="form-group">
-            <label>性別:</label>
-            <div class="gender-options">
-                <label>
-                    <input type="radio" name="gender" value="男性" checked> 男性
-                </label>
-                <label>
-                    <input type="radio" name="gender" value="女性"> 女性
-                </label>
-            </div>
-        </div>
+        <!-- 性別項目を削除しました -->
 
         <div class="form-group">
             <label for="job">仕事/職業:</label>
@@ -180,7 +169,7 @@
 
         // DOM要素の参照を取得
         const nameInput = document.getElementById('name');
-        const genderRadios = document.querySelectorAll('input[name="gender"]');
+        // genderRadios の参照を削除
         const jobInput = document.getElementById('job');
         const hobbiesInput = document.getElementById('hobbies');
         const generateButton = document.getElementById('generateBtn');
@@ -194,13 +183,7 @@
         // 生成ボタンクリック時のイベントリスナー
         generateButton.addEventListener('click', async () => {
             const name = nameInput.value.trim();
-            let gender = '';
-            for (const radio of genderRadios) {
-                if (radio.checked) {
-                    gender = radio.value;
-                    break;
-                }
-            }
+            // 性別取得ロジックを削除
             const job = jobInput.value.trim();
             const hobbies = hobbiesInput.value.trim();
 
@@ -227,12 +210,12 @@
                 }
 
                 // AIに送信するプロンプトを作成
+                // 性別に関する指示を削除
                 let prompt = `以下の情報に基づいて、ウィットに富んだ、少し大げさで魅力的な自己紹介のキャッチフレーズを一つ作成してください。
-                日本語で、50文字以内でお願いします。絵文字は禁止。性別に基づき、失礼のないような表現にしてください。キャッチフレーズのみを出力してください。
+                日本語で、50文字以内でお願いします。絵文字は禁止。キャッチフレーズのみを出力してください。
 
                 情報:
                 名前: ${name}
-                性別: ${gender}
                 仕事: ${job}
                 趣味、特技、好きなもの: ${hobbies}
                 `;
