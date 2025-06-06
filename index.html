@@ -174,7 +174,7 @@
     </div>
 
     <script type="module">
-        // グローバル変数としてアプリIDとFirebase設定を定義
+        // グローバル変数としてアプリIDとFirebase設定を定義 (GitHub Pagesでは使用されません)
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
 
@@ -186,6 +186,10 @@
         const generateButton = document.getElementById('generateBtn');
         const loadingSpinner = document.getElementById('loadingSpinner');
         const resultDiv = document.getElementById('result');
+
+        // *** ここにご自身のGemini APIキーを貼り付けてください ***
+        // 例: const apiKey = "AIzaSyCXXXXXXXXXXXXXXXXXXXXX";
+        const apiKey = "AIzaSyCMkk21fkRGxqElecxKWhFG0QNbDvqJvqg"; 
 
         // 生成ボタンクリック時のイベントリスナー
         generateButton.addEventListener('click', async () => {
@@ -200,6 +204,7 @@
             const job = jobInput.value.trim();
             const hobbies = hobbiesInput.value.trim();
 
+            // 入力チェック
             if (!name && !job && !hobbies) {
                 resultDiv.textContent = '少なくとも1つの情報を入力してください。';
                 resultDiv.style.backgroundColor = '#fef2f2'; // Reddish background for error
@@ -216,8 +221,12 @@
             generateButton.textContent = '生成中...';
 
             try {
+                // APIキーが設定されているかチェック
+                if (apiKey === "YOUR_GEMINI_API_KEY_HERE" || !apiKey) {
+                    throw new Error("APIキーが設定されていません。コード内の 'YOUR_GEMINI_API_KEY_HERE' をご自身のAPIキーに置き換えてください。");
+                }
+
                 // AIに送信するプロンプトを作成
-                // ウィットに富んだ、大げさなキャッチフレーズを生成するように指示を更新
                 let prompt = `以下の情報に基づいて、ウィットに富んだ、少し大げさで魅力的な自己紹介のキャッチフレーズを一つ作成してください。
                 日本語で、50文字以内でお願いします。絵文字は禁止。性別に基づき、失礼のないような表現にしてください。キャッチフレーズのみを出力してください。
 
@@ -228,10 +237,11 @@
                 趣味、特技、好きなもの: ${hobbies}
                 `;
 
+                console.log("送信プロンプト:", prompt); // 送信プロンプトをログ出力
+
                 const chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
                 const payload = { contents: chatHistory };
-                const apiKey = ""; // APIキーはCanvas環境によって自動的に提供されるため、空の文字列でOK
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`; // APIキーをURLに含める
 
                 const response = await fetch(apiUrl, {
                     method: 'POST',
@@ -239,7 +249,24 @@
                     body: JSON.stringify(payload)
                 });
 
+                // レスポンスの生データをログ出力
+                console.log("APIレスポンスステータス:", response.status);
+                console.log("APIレスポンスOKフラグ:", response.ok);
+
+                if (!response.ok) {
+                    // HTTPエラーの場合
+                    const errorText = await response.text();
+                    console.error('APIからのエラーレスポンス:', errorText);
+                    resultDiv.textContent = `APIエラーが発生しました: ${response.status} ${response.statusText} - ${errorText.substring(0, 100)}...`;
+                    resultDiv.style.backgroundColor = '#fef2f2';
+                    resultDiv.style.borderColor = '#ef4444';
+                    return; // 処理を終了
+                }
+
                 const result = await response.json();
+
+                // JSONパース後の結果をログ出力
+                console.log("APIレスポンスJSON:", result);
 
                 if (result.candidates && result.candidates.length > 0 &&
                     result.candidates[0].content && result.candidates[0].content.parts &&
@@ -249,13 +276,15 @@
                     resultDiv.style.backgroundColor = '#dcfce7'; // Greenish background for success
                     resultDiv.style.borderColor = '#4ade80'; // Green border
                 } else {
-                    resultDiv.textContent = 'キャッチフレーズの生成に失敗しました。もう一度お試しください。';
+                    // レスポンス構造が期待通りでない場合
+                    resultDiv.textContent = 'キャッチフレーズの生成に失敗しました。AIからの応答形式が不正な可能性があります。';
                     resultDiv.style.backgroundColor = '#fef2f2';
                     resultDiv.style.borderColor = '#ef4444';
                 }
             } catch (error) {
+                // ネットワークエラーやその他の例外
                 console.error('API呼び出し中にエラーが発生しました:', error);
-                resultDiv.textContent = 'エラーが発生しました。ネットワーク接続を確認し、再度お試しください。';
+                resultDiv.textContent = `エラーが発生しました: ${error.message || 'ネットワーク接続を確認し、再度お試しください。'}`;
                 resultDiv.style.backgroundColor = '#fef2f2';
                 resultDiv.style.borderColor = '#ef4444';
             } finally {
