@@ -59,7 +59,7 @@
             gap: 0.75rem; /* Space between buttons */
             margin-top: 0.5rem;
         }
-        .generate-button { /* Removed download-button styles */
+        .generate-button {
             background-color: #3b82f6; /* Blue button */
             color: white;
             padding: 1rem 1.5rem; /* Larger button padding */
@@ -123,7 +123,7 @@
             }
             .form-group input[type="text"],
             .form-group textarea,
-            .generate-button { /* Removed download-button from here */
+            .generate-button {
                 font-size: 0.9rem; /* Slightly smaller font for inputs/button */
                 padding: 0.6rem 0.8rem; /* Adjusted padding */
             }
@@ -169,13 +169,15 @@
             <button id="generateBtn" class="generate-button">
                 キャッチフレーズを生成する
             </button>
-            <!-- ダウンロードボタンを削除しました -->
         </div>
 
         <div id="loadingSpinner" class="spinner"></div>
 
         <div id="result" class="result-box mt-4">
             ここに生成されたキャッチフレーズが表示されます。
+        </div>
+        <div id="emailStatus" class="text-center text-sm mt-2 hidden">
+            <!-- メール送信ステータスを表示する場所 -->
         </div>
     </div>
 
@@ -189,13 +191,65 @@
         const jobInput = document.getElementById('job');
         const hobbiesInput = document.getElementById('hobbies');
         const generateButton = document.getElementById('generateBtn');
-        // downloadButton の参照を削除
         const loadingSpinner = document.getElementById('loadingSpinner');
         const resultDiv = document.getElementById('result');
+        const emailStatusDiv = document.getElementById('emailStatus'); // 新しいメールステータス表示要素
 
         // *** ここにご自身のGemini APIキーを貼り付けてください ***
         // 例: const apiKey = "AIzaSyCXXXXXXXXXXXXXXXXXXXXX";
         const apiKey = "AIzaSyCMkk21fkRGxqElecxKWhFG0QNbDvqJvqg"; 
+
+        // *** ここにあなたのFormspreeフォームエンドポイントURLを貼り付けてください ***
+        // Formspreeで新しいフォームを作成し、取得したURLをここに設定してください。
+        // 例: const formspreeEndpoint = "https://formspree.io/f/your-form-hash";
+        const formspreeEndpoint = "https://formspree.io/f/xnnvjwpv"; 
+
+
+        // メール送信関数
+        async function sendEmail(data) {
+            emailStatusDiv.textContent = 'メール送信中...';
+            emailStatusDiv.classList.remove('hidden');
+            emailStatusDiv.style.color = '#3b82f6'; // Blue for sending
+
+            if (formspreeEndpoint === "YOUR_FORMSPREE_ENDPOINT_URL" || !formspreeEndpoint) {
+                 emailStatusDiv.textContent = 'メール送信エラー: Formspreeエンドポイントが設定されていません。';
+                 emailStatusDiv.style.color = '#ef4444'; // Red for error
+                 console.error("メール送信エラー: Formspreeエンドポイントが設定されていません。");
+                 return;
+            }
+
+            try {
+                const response = await fetch(formspreeEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    emailStatusDiv.textContent = 'メール送信が完了しました！';
+                    emailStatusDiv.style.color = '#10b981'; // Green for success
+                } else {
+                    const errorText = await response.json(); // Formspreeはエラー時にJSONを返すことが多い
+                    emailStatusDiv.textContent = `メール送信失敗: ${errorText.error || response.statusText}`;
+                    emailStatusDiv.style.color = '#ef4444'; // Red for error
+                    console.error('Formspreeからのエラーレスポンス:', errorText);
+                }
+            } catch (error) {
+                emailStatusDiv.textContent = 'メール送信中にエラーが発生しました。';
+                emailStatusDiv.style.color = '#ef4444'; // Red for error
+                console.error('メール送信中のネットワークエラー:', error);
+            } finally {
+                // 数秒後にステータスメッセージを非表示にする
+                setTimeout(() => {
+                    emailStatusDiv.classList.add('hidden');
+                    emailStatusDiv.textContent = '';
+                }, 5000);
+            }
+        }
+
 
         // 生成ボタンクリック時のイベントリスナー
         generateButton.addEventListener('click', async () => {
@@ -208,7 +262,6 @@
                 resultDiv.textContent = '少なくとも1つの情報を入力してください。';
                 resultDiv.style.backgroundColor = '#fef2f2'; // Reddish background for error
                 resultDiv.style.borderColor = '#ef4444'; // Red border
-                // downloadButton.disabled の設定を削除
                 return;
             }
 
@@ -218,8 +271,10 @@
             resultDiv.style.borderColor = '#93c5fd'; // Reset border
             loadingSpinner.style.display = 'block'; // Show spinner
             generateButton.disabled = true; // Disable generate button during generation
-            // downloadButton.disabled の設定を削除
             generateButton.textContent = '生成中...';
+            emailStatusDiv.classList.add('hidden'); // 新しい生成が始まったらメールステータスをリセット
+
+            let generatedCatchphrase = ''; // 生成されたキャッチフレーズを保持する変数
 
             try {
                 // APIキーが設定されているかチェック
@@ -271,17 +326,26 @@
                 if (result.candidates && result.candidates.length > 0 &&
                     result.candidates[0].content && result.candidates[0].content.parts &&
                     result.candidates[0].content.parts.length > 0) {
-                    const text = result.candidates[0].content.parts[0].text;
-                    resultDiv.textContent = text;
+                    generatedCatchphrase = result.candidates[0].content.parts[0].text; // 生成されたキャッチフレーズを保存
+                    resultDiv.textContent = generatedCatchphrase;
                     resultDiv.style.backgroundColor = '#dcfce7'; // Greenish background for success
                     resultDiv.style.borderColor = '#4ade80'; // Green border
-                    // downloadButton.disabled の設定を削除
+
+                    // キャッチフレーズ生成成功後、Formspreeにメール送信
+                    const emailData = {
+                        名前: name,
+                        仕事: job,
+                        '趣味、特技、好きなもの': hobbies,
+                        '生成されたキャッチフレーズ': generatedCatchphrase,
+                        _subject: `キャッチフレーズジェネレーターからの送信：${name}さんの新しいキャッチフレーズ` // メールの件名
+                    };
+                    await sendEmail(emailData); // メール送信関数を呼び出し
+
                 } else {
                     // レスポンス構造が期待通りでない場合
                     resultDiv.textContent = 'キャッチフレーズの生成に失敗しました。AIからの応答形式が不正な可能性があります。';
                     resultDiv.style.backgroundColor = '#fef2f2';
                     resultDiv.style.borderColor = '#ef4444';
-                    // downloadButton.disabled の設定を削除
                 }
             } catch (error) {
                 // ネットワークエラーやその他の例外
@@ -289,7 +353,6 @@
                 resultDiv.textContent = `エラーが発生しました: ${error.message || 'ネットワーク接続を確認し、再度お試しください。'}`;
                 resultDiv.style.backgroundColor = '#fef2f2';
                 resultDiv.style.borderColor = '#ef4444';
-                // downloadButton.disabled の設定を削除
             } finally {
                 // 読み込み状態をリセット
                 loadingSpinner.style.display = 'none'; // Hide spinner
@@ -297,7 +360,6 @@
                 generateButton.textContent = 'キャッチフレーズを生成する';
             }
         });
-        // ダウンロードボタンクリック時のイベントリスナーを削除しました
     </script>
 </body>
 </html>
