@@ -53,7 +53,13 @@
             border-color: #60a5fa; /* Blue focus border */
             box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.3); /* Blue focus shadow */
         }
-        .generate-button {
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem; /* Space between buttons */
+            margin-top: 0.5rem;
+        }
+        .generate-button { /* Removed download-button styles */
             background-color: #3b82f6; /* Blue button */
             color: white;
             padding: 1rem 1.5rem; /* Larger button padding */
@@ -117,7 +123,7 @@
             }
             .form-group input[type="text"],
             .form-group textarea,
-            .generate-button {
+            .generate-button { /* Removed download-button from here */
                 font-size: 0.9rem; /* Slightly smaller font for inputs/button */
                 padding: 0.6rem 0.8rem; /* Adjusted padding */
             }
@@ -125,12 +131,22 @@
                 font-size: 1rem;
                 padding: 1rem;
             }
+            /* Adjust h1 font size for small screens */
+            .text-title-responsive {
+                font-size: 1.75rem; /* text-3xl was too large, adjusted to text-2xl on small screens */
+            }
+        }
+        /* Default h1 size for medium and larger screens */
+        @media (min-width: 481px) {
+            .text-title-responsive {
+                font-size: 2.25rem; /* Equivalent to text-4xl */
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 class="text-3xl font-bold text-center text-gray-800 mb-4 md:mb-6">
+        <h1 class="text-2xl md:text-3xl font-bold text-center text-gray-800 mb-4 md:mb-6 text-title-responsive">
             ✨ あなたのキャッチフレーズを生成！ ✨
         </h1>
 
@@ -138,8 +154,6 @@
             <label for="name">名前:</label>
             <input type="text" id="name" placeholder="例: 山田 太郎" class="shadow-sm">
         </div>
-
-        <!-- 性別項目を削除しました -->
 
         <div class="form-group">
             <label for="job">仕事/職業:</label>
@@ -151,9 +165,12 @@
             <textarea id="hobbies" rows="3" placeholder="例: 読書、ハイキング、プログラミング、料理" class="shadow-sm"></textarea>
         </div>
 
-        <button id="generateBtn" class="generate-button">
-            キャッチフレーズを生成する
-        </button>
+        <div class="button-group">
+            <button id="generateBtn" class="generate-button">
+                キャッチフレーズを生成する
+            </button>
+            <!-- ダウンロードボタンを削除しました -->
+        </div>
 
         <div id="loadingSpinner" class="spinner"></div>
 
@@ -169,10 +186,10 @@
 
         // DOM要素の参照を取得
         const nameInput = document.getElementById('name');
-        // genderRadios の参照を削除
         const jobInput = document.getElementById('job');
         const hobbiesInput = document.getElementById('hobbies');
         const generateButton = document.getElementById('generateBtn');
+        // downloadButton の参照を削除
         const loadingSpinner = document.getElementById('loadingSpinner');
         const resultDiv = document.getElementById('result');
 
@@ -183,7 +200,6 @@
         // 生成ボタンクリック時のイベントリスナー
         generateButton.addEventListener('click', async () => {
             const name = nameInput.value.trim();
-            // 性別取得ロジックを削除
             const job = jobInput.value.trim();
             const hobbies = hobbiesInput.value.trim();
 
@@ -192,6 +208,7 @@
                 resultDiv.textContent = '少なくとも1つの情報を入力してください。';
                 resultDiv.style.backgroundColor = '#fef2f2'; // Reddish background for error
                 resultDiv.style.borderColor = '#ef4444'; // Red border
+                // downloadButton.disabled の設定を削除
                 return;
             }
 
@@ -200,7 +217,8 @@
             resultDiv.style.backgroundColor = '#eff6ff'; // Reset background
             resultDiv.style.borderColor = '#93c5fd'; // Reset border
             loadingSpinner.style.display = 'block'; // Show spinner
-            generateButton.disabled = true; // Disable button during generation
+            generateButton.disabled = true; // Disable generate button during generation
+            // downloadButton.disabled の設定を削除
             generateButton.textContent = '生成中...';
 
             try {
@@ -210,8 +228,7 @@
                 }
 
                 // AIに送信するプロンプトを作成
-                // 性別に関する指示を削除
-                let prompt = `以下の情報に基づいて、ウィットに富んだ、少し大げさで魅力的な自己紹介のキャッチフレーズを一つ作成してください。
+                let prompt = `以下の情報に基づいて、聞く人の自己肯定感を高め、好感を持ってもらえるような、ウィットに富んだ、少し大げさで魅力的な自己紹介のキャッチフレーズを一つ作成してください。
                 日本語で、50文字以内でお願いします。絵文字は禁止。キャッチフレーズのみを出力してください。
 
                 情報:
@@ -258,11 +275,13 @@
                     resultDiv.textContent = text;
                     resultDiv.style.backgroundColor = '#dcfce7'; // Greenish background for success
                     resultDiv.style.borderColor = '#4ade80'; // Green border
+                    // downloadButton.disabled の設定を削除
                 } else {
                     // レスポンス構造が期待通りでない場合
                     resultDiv.textContent = 'キャッチフレーズの生成に失敗しました。AIからの応答形式が不正な可能性があります。';
                     resultDiv.style.backgroundColor = '#fef2f2';
                     resultDiv.style.borderColor = '#ef4444';
+                    // downloadButton.disabled の設定を削除
                 }
             } catch (error) {
                 // ネットワークエラーやその他の例外
@@ -270,13 +289,15 @@
                 resultDiv.textContent = `エラーが発生しました: ${error.message || 'ネットワーク接続を確認し、再度お試しください。'}`;
                 resultDiv.style.backgroundColor = '#fef2f2';
                 resultDiv.style.borderColor = '#ef4444';
+                // downloadButton.disabled の設定を削除
             } finally {
                 // 読み込み状態をリセット
                 loadingSpinner.style.display = 'none'; // Hide spinner
-                generateButton.disabled = false; // Enable button
+                generateButton.disabled = false; // Enable generate button
                 generateButton.textContent = 'キャッチフレーズを生成する';
             }
         });
+        // ダウンロードボタンクリック時のイベントリスナーを削除しました
     </script>
 </body>
 </html>
