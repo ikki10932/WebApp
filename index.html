@@ -151,8 +151,8 @@
         </h1>
 
         <div class="form-group">
-            <label for="name">名前:</label>
-            <input type="text" id="name" placeholder="例: 山田 太郎" class="shadow-sm">
+            <label for="name">ニックネーム（本名は入れないで下さい）:</label>
+            <input type="text" id="name" placeholder="例: かわつ" class="shadow-sm">
         </div>
 
         <div class="form-group">
@@ -283,8 +283,9 @@
                 }
 
                 // AIに送信するプロンプトを作成
+                // キャッチフレーズに名前を含めないように指示を追加
                 let prompt = `以下の情報に基づいて、聞く人の自己肯定感を高め、好感を持ってもらえるような、ウィットに富んだ、少し大げさで魅力的な自己紹介のキャッチフレーズを一つ作成してください。
-                日本語で、50文字以内でお願いします。絵文字は禁止。キャッチフレーズのみを出力してください。
+                キャッチフレーズに名前（${name}）は含めないでください。日本語で、50文字以内でお願いします。絵文字は禁止。キャッチフレーズのみを出力してください。
 
                 情報:
                 名前: ${name}
