@@ -206,7 +206,7 @@
                 const customTheme = customThemeInput.value.trim();
                 if (!customTheme) {
                     showMessageBox("テーマを指定してください。");
-                    buttonText.textContent = 'プロンプトを作る'; // 変更後のテキスト
+                    buttonText.textContent = 'プロンプトを作る';
                     loadingSpinner.classList.add('hidden');
                     generatePromptBtn.disabled = false;
                     return;
@@ -265,7 +265,7 @@
                     console.error("Error calling Gemini API:", error);
                 } finally {
                     promptOutput.value = promptContent;
-                    buttonText.textContent = 'プロンプトを作る'; // 変更後のテキスト
+                    buttonText.textContent = 'プロンプトを作る';
                     loadingSpinner.classList.add('hidden');
                     generatePromptBtn.disabled = false;
                 }
@@ -273,37 +273,35 @@
             } else if (selectedTheme === 'bikkuriman') {
                 promptContent = `あなたは優秀なキャラクターデザイナーです。ビックリマンシール風のオリジナルキャラクター画像を生成してください。画像があれば、それをモデルにしてください。\n・アスペクト比は1:1の正方形\n・2頭身のデフォルメキャラ\n・背景はラメやホログラムのようなキラキラした質感\n・上部に「スライド芸人かわつ」と目立つフォントで表示\n・金色のフレームで囲む\n・全体を80年代風のポップな配色に\n・天使風のデザインで`;
                 promptOutput.value = promptContent;
-                buttonText.textContent = 'プロンプトを作る'; // 変更後のテキスト
+                buttonText.textContent = 'プロンプトを作る';
                 loadingSpinner.classList.add('hidden');
                 generatePromptBtn.disabled = false;
             } else if (selectedTheme === 'logoMark') {
                 promptContent = `あなたは優秀なロゴデザイナーです。以下の要件に従って、オリジナルステッカー画像を生成してください。\n・シンプルでスタイリッシュなデザイン\n・金色を基調とした色使い\n・細い輪郭線\n・都会を想像させるイメージ\n・背景は白\n・かっこいい雰囲気\n・「Dai-Nagoya University Network」と大きく文字を中央に表示。文字色は背景色と異なる色`;
                 promptOutput.value = promptContent;
-                buttonText.textContent = 'プロンプトを作る'; // 変更後のテキスト
+                buttonText.textContent = 'プロンプトを作る';
                 loadingSpinner.classList.add('hidden');
                 generatePromptBtn.disabled = false;
             } else if (selectedTheme === 'soloTravel') {
                 const destination = destinationSelect.value;
-                const placesToVisit = placesToVisitInput.value.trim();
+                const placesToVisit = placesToVisitInput.value.trim(); // 空白チェックのためにtrim()を使用
 
                 if (!destination) {
                     showMessageBox("目的地を選択してください。");
-                    buttonText.textContent = 'プロンプトを作る'; // 変更後のテキスト
-                    loadingSpinner.classList.add('hidden');
-                    generatePromptBtn.disabled = false;
-                    return;
-                }
-                if (!placesToVisit) {
-                    showMessageBox("行きたい施設等を入力してください。");
-                    buttonText.textContent = 'プロンプトを作る'; // 変更後のテキスト
+                    buttonText.textContent = 'プロンプトを作る';
                     loadingSpinner.classList.add('hidden');
                     generatePromptBtn.disabled = false;
                     return;
                 }
 
-                promptContent = `あなたはプロのツアーコンダクターです。名古屋から${destination}に2泊3日で電車を使い1人旅に行きたいです。旅行プランを考えてください。\n${placesToVisit}には必ず行きたいです。\n他にも近場で観光を楽しめるおすすめの場所があればプランに組み込んでください。\n各日ごとに、移動ルートと所要時間を記載してください。`;
+                let placesToVisitPhrase = "";
+                if (placesToVisit) { // 行きたい施設等が空白でない場合のみフレーズを追加
+                    placesToVisitPhrase = `${placesToVisit}には必ず行きたいです。\n`;
+                }
+
+                promptContent = `あなたはプロのツアーコンダクターです。名古屋から${destination}に2泊3日で電車を使い1人旅に行きたいです。旅行プランを考えてください。\n${placesToVisitPhrase}他にも近場で観光を楽しめるおすすめの場所があればプランに組み込んでください。\n各日ごとに、移動ルートと所要時間を記載してください。`;
                 promptOutput.value = promptContent;
-                buttonText.textContent = 'プロンプトを作る'; // 変更後のテキスト
+                buttonText.textContent = 'プロンプトを作る';
                 loadingSpinner.classList.add('hidden');
                 generatePromptBtn.disabled = false;
             } else if (selectedTheme === 'nagoyaLessonPlan') {
@@ -312,7 +310,7 @@
 #テーマ
 #内容`;
                 promptOutput.value = promptContent;
-                buttonText.textContent = 'プロンプトを作る'; // 変更後のテキスト
+                buttonText.textContent = 'プロンプトを作る';
                 loadingSpinner.classList.add('hidden');
                 generatePromptBtn.disabled = false;
             }
