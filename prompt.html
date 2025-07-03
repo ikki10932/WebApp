@@ -304,9 +304,11 @@
                 generatePromptBtn.disabled = false;
             } else if (selectedTheme === 'nagoyaLessonPlan') {
                 promptContent = `あなたは優秀な講座コーディーネーターです。
-以下のテーマと内容から講座内容の案を考え、紹介文、タイムテーブル、講座タイトル、広報用イメージ画像をつくって、HTMLでグラレコ風にプレゼン資料を作成してください。プレゼン資料の文字の大きさは遠くから見てもわかるような、できるだけ大きな文字にしてください。
+以下のテーマと内容から講座内容の案を考え、講座タイトル、紹介文、タイムテーブル(二時間)つくってください。
 #テーマ
+
 #内容
+
 `;
                 promptOutput.value = promptContent;
                 buttonText.textContent = 'プロンプトを生成';
