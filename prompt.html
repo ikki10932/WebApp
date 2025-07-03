@@ -241,7 +241,7 @@
                     let chatHistory = [];
                     chatHistory.push({ role: "user", parts: [{ text: promptBase }] });
                     const payload = { contents: chatHistory };
-                    const apiKey = ""; // If you want to use models other than gemini-2.0-flash or imagen-3.0-generate-002, provide an API key here. Otherwise, leave this as-is.
+                    const apiKey = "AIzaSyCOBM0oOfu50TEL97A-IBdm1xUy1qs5t8Y"; // If you want to use models other than gemini-2.0-flash or imagen-3.0-generate-002, provide an API key here. Otherwise, leave this as-is.
                     const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
                     const response = await fetch(apiUrl, {
@@ -319,20 +319,12 @@
         // クリップボードにコピーボタンのクリックイベントリスナー
         copyToClipboardBtn.addEventListener('click', () => {
             if (promptOutput.value) {
-                // 一時的なtextareaを作成し、そこに値をコピーする
-                const tempTextArea = document.createElement('textarea');
-                tempTextArea.value = promptOutput.value;
-                tempTextArea.style.position = 'absolute';
-                tempTextArea.style.left = '-9999px'; // 画面外に配置
-                document.body.appendChild(tempTextArea);
+                // Select the text field
+                promptOutput.select();
+                promptOutput.setSelectionRange(0, 99999); // For mobile devices
 
-                // 一時的なtextareaを選択し、コピーコマンドを実行
-                tempTextArea.select();
-                tempTextArea.setSelectionRange(0, 99999); // For mobile devices
+                // Copy the text inside the text field
                 document.execCommand('copy');
-
-                // 一時的なtextareaを削除
-                document.body.removeChild(tempTextArea);
 
                 // コピー成功メッセージを表示
                 copyMessage.textContent = "プロンプトがクリップボードにコピーされました！";
