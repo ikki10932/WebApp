@@ -84,7 +84,7 @@
 
         <!-- Geminiリンクを追加 -->
         <div class="text-center">
-            <a href="https://gemini.google.com/app" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm font-semibold underline transition duration-200 ease-in-out">
+            <a href="https://gemini.google.com/app" target="_blank" rel="noopener noreferrer" onclick="window.open('https://gemini.google.com/app', '_blank'); return false;" class="text-blue-600 hover:text-blue-800 text-sm font-semibold underline transition duration-200 ease-in-out">
                 Geminiでプロンプトを実行する
             </a>
         </div>
@@ -306,8 +306,8 @@
                 promptContent = `あなたは優秀な講座コーディーネーターです。
 以下のテーマと内容から講座内容の案を考え、紹介文、タイムテーブル、講座タイトル、広報用イメージ画像をつくって、HTMLでグラレコ風にプレゼン資料を作成してください。プレゼン資料の文字の大きさは遠くから見てもわかるような、できるだけ大きな文字にしてください。
 #テーマ
-
-#内容`;
+#内容
+`;
                 promptOutput.value = promptContent;
                 buttonText.textContent = 'プロンプトを生成';
                 loadingSpinner.classList.add('hidden');
