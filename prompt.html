@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>プロンプト生成アプリ</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for Inter font */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Spinner styles */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #3b82f6; /* Blue-500 */
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-100 to-purple-100 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white p-6 rounded-xl shadow-lg w-full max-w-md">
+        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">プロンプト生成アプリ</h1>
+
+        <!-- テーマ選択コンボボックス -->
+        <div class="mb-4">
+            <label for="themeSelect" class="block text-gray-700 text-sm font-semibold mb-2">テーマを選択:</label>
+            <select id="themeSelect" class="block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out">
+                <option value="specifyTheme">テーマを指定</option>
+                <option value="bikkuriman">ビックリマンシール</option>
+                <option value="logoMark">ロゴマーク</option>
+            </select>
+        </div>
+
+        <!-- テーマ指定用一行エディットボックス -->
+        <div class="mb-4" id="themeInputContainer">
+            <label for="customThemeInput" class="block text-gray-700 text-sm font-semibold mb-2">カスタムテーマ (例: ヴィンテージ自転車):</label>
+            <input type="text" id="customThemeInput" class="block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out" placeholder="テーマを入力してください">
+        </div>
+
+        <!-- プロンプト生成ボタン -->
+        <button id="generatePromptBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 mb-4">
+            <span id="buttonText">プロンプトを生成</span>
+            <span id="loadingSpinner" class="spinner hidden"></span>
+        </button>
+
+        <!-- 複数行エディットボックス (プロンプト表示用) -->
+        <div class="mb-4">
+            <label for="promptOutput" class="block text-gray-700 text-sm font-semibold mb-2">生成されたプロンプト:</label>
+            <textarea id="promptOutput" rows="10" class="block w-full p-3 border border-gray-300 rounded-md shadow-sm bg-gray-50 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out" readonly placeholder="ここにプロンプトが生成されます..."></textarea>
+        </div>
+
+        <!-- コピーボタン -->
+        <button id="copyToClipboardBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+            コピーする
+        </button>
+
+        <!-- メッセージボックス (アラートの代替) -->
+        <div id="messageBox" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
+            <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
+                <p id="messageText" class="text-lg font-semibold text-gray-800 mb-4"></p>
+                <button id="closeMessageBoxBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md transition duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM要素の取得
+        const themeSelect = document.getElementById('themeSelect');
+        const customThemeInput = document.getElementById('customThemeInput');
+        const themeInputContainer = document.getElementById('themeInputContainer');
+        const generatePromptBtn = document.getElementById('generatePromptBtn');
+        const buttonText = document.getElementById('buttonText');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const promptOutput = document.getElementById('promptOutput');
+        const copyToClipboardBtn = document.getElementById('copyToClipboardBtn');
+        const messageBox = document.getElementById('messageBox');
+        const messageText = document.getElementById('messageText');
+        const closeMessageBoxBtn = document.getElementById('closeMessageBoxBtn');
+
+        // メッセージボックスを表示する関数
+        function showMessageBox(message) {
+            messageText.textContent = message;
+            messageBox.classList.remove('hidden');
+        }
+
+        // メッセージボックスを閉じる関数
+        closeMessageBoxBtn.addEventListener('click', () => {
+            messageBox.classList.add('hidden');
+        });
+
+        // テーマ選択の変更イベントリスナー
+        themeSelect.addEventListener('change', () => {
+            if (themeSelect.value === 'specifyTheme') {
+                themeInputContainer.classList.remove('hidden'); // 入力ボックスを表示
+                customThemeInput.disabled = false; // 入力ボックスを有効化
+            } else {
+                themeInputContainer.classList.add('hidden'); // 入力ボックスを非表示
+                customThemeInput.disabled = true; // 入力ボックスを無効化
+            }
+        });
+
+        // 初期状態を設定（ページロード時）
+        themeSelect.dispatchEvent(new Event('change'));
+
+        // プロンプト生成ボタンのクリックイベントリスナー
+        generatePromptBtn.addEventListener('click', async () => {
+            let promptBase = "";
+            const selectedTheme = themeSelect.value;
+
+            // 複数行エディットボックスをクリア
+            promptOutput.value = "";
+
+            // ボタンのテキストとスピナーの表示を切り替える
+            buttonText.textContent = '生成中...';
+            loadingSpinner.classList.remove('hidden');
+            generatePromptBtn.disabled = true; // ボタンを無効化
+
+            if (selectedTheme === 'specifyTheme') {
+                const customTheme = customThemeInput.value.trim();
+                if (!customTheme) {
+                    showMessageBox("テーマを指定してください。");
+                    buttonText.textContent = 'プロンプトを生成';
+                    loadingSpinner.classList.add('hidden');
+                    generatePromptBtn.disabled = false; // ボタンを有効化
+                    return;
+                }
+                // LLMに渡すプロンプトの構築
+                promptBase = `Geminiで使用するプロンプトを日本語で１つだけ構築してください。
+テーマは「${customTheme}」で、キャラクターの表情や仕草は場の雰囲気に合わせて考えて作ってください。また、クオリティプロンプトや臨場感を強く出せるようなプロンプト構成にして。
+強調構文を抜くこと。毎回バリエーションや様々な方向性で作ること、
+ただし、以下のプロンプトガイドを意識して完成版のプロンプトを作ること。プロンプトは冒頭に「以下の画像を作ってください。サイズは正方形。」と入れて、余計な案内文などは入れないでください。
+
+【プロンプトガイド】
+1. 明確な対象物を指定する（上記で入力したテーマ）
+まず、何を描きたいのかを明確に定義しましょう。人物、物体、風景など、具体的に指定します。
+ 例：「ヴィンテージ自転車」
+2. 動作や雰囲気を追加する
+対象物に動きや感情を加えることで、より生き生きとした画像になります。
+ 例：「丘を下るヴィンテージ自転車」または「懐かしさを感じるヴィンテージ自転車」
+3. 場面設定を行う
+環境の詳細（色、質感、照明、天候など）を記述します。
+ 例：「晴れた田園風景の中で丘を下るヴィンテージ自転車」
+4. 重要な詳細を強調する
+被写体や製品を強調するために、服装、小道具、特徴などの重要な要素を強調します。
+ 例：「晴れた田園風景の中で丘を下る、光沢のある赤いフレームと昔ながらの革製シートを持つヴィンテージ自転車」
+5. スタイルを選択する
+写真のようなリアルなスタイルやアニメ風など、希望する表現スタイルを指定します。
+ 例：「フォトリアリスティックなスタイルで描かれた、晴れた田園風景の中で丘を下る、光沢のある赤いフレームと昔ながらの革製シートを持つヴィンテージ自転車」
+6. 視覚効果を追加する（完成版）
+照明、深度、特殊効果などを追加して構図を強化します。
+ 例：「黄金の日差しの下で輝き、後ろにほこりを引きながら、晴れた田園風景の中で丘を下る、光沢のある赤いフレームと昔ながらの革製シートを持つヴィンテージ自転車」`;
+
+                try {
+                    let chatHistory = [];
+                    chatHistory.push({ role: "user", parts: [{ text: promptBase }] });
+                    const payload = { contents: chatHistory };
+                    const apiKey = "AIzaSyCMkk21fkRGxqElecxKWhFG0QNbDvqJvqg"; // If you want to use models other than gemini-2.0-flash or imagen-3.0-generate-002, provide an API key here. Otherwise, leave this as-is.
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        const text = result.candidates[0].content.parts[0].text;
+                        promptOutput.value = text;
+                    } else {
+                        promptOutput.value = "プロンプトの生成に失敗しました。";
+                        console.error("API response structure unexpected:", result);
+                    }
+                } catch (error) {
+                    promptOutput.value = "プロンプトの生成中にエラーが発生しました。";
+                    console.error("Error calling Gemini API:", error);
+                } finally {
+                    buttonText.textContent = 'プロンプトを生成';
+                    loadingSpinner.classList.add('hidden');
+                    generatePromptBtn.disabled = false; // ボタンを有効化
+                }
+
+            } else if (selectedTheme === 'bikkuriman') {
+                promptOutput.value = `あなたは優秀なキャラクターデザイナーです。ビックリマンシール風のオリジナルキャラクター画像を生成してください。画像があれば、それをモデルにしてください。\n・アスペクト比は1:1の正方形\n・2頭身のデフォルメキャラ\n・背景はラメやホログラムのようなキラキラした質感\n・上部に「スライド芸人かわつ」と目立つフォントで表示\n・金色のフレームで囲む\n・全体を80年代風のポップな配色に\n・天使風のデザインで`;
+                buttonText.textContent = 'プロンプトを生成';
+                loadingSpinner.classList.add('hidden');
+                generatePromptBtn.disabled = false; // ボタンを有効化
+            } else if (selectedTheme === 'logoMark') {
+                promptOutput.value = `あなたは優秀なロゴデザイナーです。以下の要件に従って、オリジナルステッカー画像を生成してください。\n・シンプルでスタイリッシュなデザイン\n・金色を基調とした色使い\n・細い輪郭線\n・都会を想像させるイメージ\n・背景は白\n・かっこいい雰囲気\n・「Dai-Nagoya University Network」と大きく文字を中央に表示。文字色は背景色と異なる色`;
+                buttonText.textContent = 'プロンプトを生成';
+                loadingSpinner.classList.add('hidden');
+                generatePromptBtn.disabled = false; // ボタンを有効化
+            }
+        });
+
+        // クリップボードにコピーボタンのクリックイベントリスナー
+        copyToClipboardBtn.addEventListener('click', () => {
+            if (promptOutput.value) {
+                // Select the text field
+                promptOutput.select();
+                promptOutput.setSelectionRange(0, 99999); // For mobile devices
+
+                // Copy the text inside the text field
+                document.execCommand('copy');
+                showMessageBox("プロンプトがクリップボードにコピーされました！");
+            } else {
+                showMessageBox("コピーするプロンプトがありません。");
+            }
+        });
+    </script>
+</body>
+</html>
