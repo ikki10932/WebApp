@@ -292,7 +292,7 @@
                     placesToVisitPhrase = `${placesToVisit}には必ず行きたいです。\n`;
                 }
 
-                promptContent = `あなたはプロのツアーコンダクターです。名古屋から${destination}に2泊3日で電車を使い1人旅に行きたいです。旅行プランを考えてください。\n${placesToVisitPhrase}他にも近場で観光を楽しめるおすすめの場所があればプランに組み込んでください。\n各日ごとに、移動ルートと所要時間を記載してください。`;
+                promptContent = `あなたはプロのツアーコンダクターです。名古屋から${destination}に2泊3日で電車を使い1人旅に行きたいです。旅行プランを考えてください。スマートフォンで見やすい形式でスケジュールを提示してください。\n${placesToVisitPhrase}他にも近場で観光を楽しめるおすすめの場所があればプランに組み込んでください。\n各日ごとに、移動ルートを必ず記載してください。`;
                 promptOutput.value = promptContent;
                 buttonText.textContent = 'プロンプトを作る';
                 loadingSpinner.classList.add('hidden');
