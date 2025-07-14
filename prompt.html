@@ -27,10 +27,17 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        /* Response image styles */
+        .response-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-blue-100 to-purple-100 min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white p-6 rounded-xl shadow-lg w-full max-w-md">
+    <div class="bg-white p-6 rounded-xl shadow-lg w-full max-w-2xl">
         <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">プロンプト生成アプリ</h1>
 
         <!-- テーマ選択コンボボックス -->
@@ -74,16 +81,20 @@
         <!-- 複数行エディットボックス (プロンプト表示用) -->
         <div class="mb-4">
             <label for="promptOutput" class="block text-gray-700 text-sm font-semibold mb-2">プロンプト:</label>
-            <textarea id="promptOutput" rows="10" class="block w-full p-3 border border-gray-300 rounded-md shadow-sm bg-gray-50 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out" placeholder="ここにプロンプトが生成されます..."></textarea>
+            <textarea id="promptOutput" rows="6" class="block w-full p-3 border border-gray-300 rounded-md shadow-sm bg-gray-50 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out" placeholder="ここにプロンプトが生成されます..."></textarea>
         </div>
 
-        <!-- コピーボタン -->
-        <button id="copyToClipboardBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 mb-2">
-            コピーする
+        <!-- Geminiに送信ボタン -->
+        <button id="sendToGeminiBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 mb-4">
+            <span id="sendButtonText">Geminiに送信</span>
+            <span id="sendLoadingSpinner" class="spinner hidden"></span>
         </button>
 
-        <!-- コピー成功メッセージ -->
-        <div id="copyMessage" class="text-red-500 text-sm text-center mb-4 hidden"></div>
+        <!-- Geminiからの応答表示エリア -->
+        <div id="responseContainer" class="mb-4 hidden">
+            <label class="block text-gray-700 text-sm font-semibold mb-2">Geminiからの応答:</label>
+            <div id="responseOutput" class="block w-full p-4 border border-gray-300 rounded-md shadow-sm bg-gray-50 min-h-[200px] whitespace-pre-wrap"></div>
+        </div>
 
         <!-- メッセージボックス (アラートの代替) -->
         <div id="messageBox" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
@@ -108,8 +119,11 @@
         const buttonText = document.getElementById('buttonText');
         const loadingSpinner = document.getElementById('loadingSpinner');
         const promptOutput = document.getElementById('promptOutput');
-        const copyToClipboardBtn = document.getElementById('copyToClipboardBtn');
-        const copyMessage = document.getElementById('copyMessage'); // 新しいコピーメッセージ要素
+        const sendToGeminiBtn = document.getElementById('sendToGeminiBtn');
+        const sendButtonText = document.getElementById('sendButtonText');
+        const sendLoadingSpinner = document.getElementById('sendLoadingSpinner');
+        const responseContainer = document.getElementById('responseContainer');
+        const responseOutput = document.getElementById('responseOutput');
         const messageBox = document.getElementById('messageBox');
         const messageText = document.getElementById('messageText');
         const closeMessageBoxBtn = document.getElementById('closeMessageBoxBtn');
@@ -127,9 +141,7 @@
 
         // 目的地コンボボックスに都道府県オプションを追加する関数
         function populatePrefectures() {
-            // 既存のオプションをクリア
             destinationSelect.innerHTML = '';
-            // デフォルトオプションを追加
             const defaultOption = document.createElement('option');
             defaultOption.value = "";
             defaultOption.textContent = "目的地を選択してください";
@@ -137,7 +149,6 @@
             defaultOption.selected = true;
             destinationSelect.appendChild(defaultOption);
 
-            // 各都道府県をオプションとして追加
             prefectures.forEach(prefecture => {
                 const option = document.createElement('option');
                 option.value = prefecture;
@@ -146,7 +157,7 @@
             });
         }
 
-        // メッセージボックスを表示する関数 (バリデーション用)
+        // メッセージボックスを表示する関数
         function showMessageBox(message) {
             messageText.textContent = message;
             messageBox.classList.remove('hidden');
@@ -159,14 +170,12 @@
 
         // テーマ選択の変更イベントリスナー
         themeSelect.addEventListener('change', () => {
-            // 全ての入力コンテナを非表示・無効化
             themeInputContainer.classList.add('hidden');
             customThemeInput.disabled = true;
             soloTravelInputContainer.classList.add('hidden');
             destinationSelect.disabled = true;
             placesToVisitInput.disabled = true;
 
-            // 選択されたテーマに応じて表示・有効化
             if (themeSelect.value === 'specifyTheme') {
                 themeInputContainer.classList.remove('hidden');
                 customThemeInput.disabled = false;
@@ -175,25 +184,67 @@
                 destinationSelect.disabled = false;
                 placesToVisitInput.disabled = false;
             }
-            // 「大ナゴヤの日授業案」が選択された場合は、他の入力フィールドは非表示のまま
 
-            // コンボボックスの選択が変わったら複数行エディットボックスをクリア
             promptOutput.value = "";
+            responseContainer.classList.add('hidden');
+            responseOutput.innerHTML = "";
         });
 
-        // 初期状態を設定（ページロード時）
-        populatePrefectures(); // 都道府県をロード
+        // 初期状態を設定
+        populatePrefectures();
         themeSelect.dispatchEvent(new Event('change'));
+
+        // Gemini APIを呼び出す関数
+        async function callGeminiAPI(prompt, isImageGeneration = false) {
+            const apiKey = "AIzaSyCeYtfDAIY3XvgS6jEWEwbuVOS7kct97ro";
+            
+            if (isImageGeneration) {
+                // Imagen APIを使用
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:generateContent?key=${apiKey}`;
+                const payload = {
+                    contents: [{
+                        parts: [{
+                            text: prompt
+                        }]
+                    }]
+                };
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                return await response.json();
+            } else {
+                // テキスト生成APIを使用
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                const payload = {
+                    contents: [{
+                        parts: [{
+                            text: prompt
+                        }]
+                    }]
+                };
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                return await response.json();
+            }
+        }
 
         // プロンプト生成ボタンのクリックイベントリスナー
         generatePromptBtn.addEventListener('click', async () => {
             let promptContent = "";
             const selectedTheme = themeSelect.value;
 
-            // ボタンのテキストとスピナーの表示を切り替える
             buttonText.textContent = '生成中...';
             loadingSpinner.classList.remove('hidden');
-            generatePromptBtn.disabled = true; // ボタンを無効化
+            generatePromptBtn.disabled = true;
 
             if (selectedTheme === 'specifyTheme') {
                 const customTheme = customThemeInput.value.trim();
@@ -204,7 +255,7 @@
                     generatePromptBtn.disabled = false;
                     return;
                 }
-                // LLMに渡すプロンプトの構築
+                
                 const promptBase = `Geminiで使用するプロンプトを日本語で１つだけ構築してください。
 テーマは「${customTheme}」で、キャラクターの表情や仕草は場の雰囲気に合わせて考えて作ってください。また、クオリティプロンプトや臨場感を強く出せるようなプロンプト構成にして。
 強調構文を抜くこと。毎回バリエーションや様々な方向性で作ること、
@@ -243,20 +294,7 @@
  例：「黄金の日差しの下で輝き、後ろにほこりを引きながら、晴れた田園風景の中で丘を下る、光沢のある赤いフレームと昔ながらの革製シートを持つヴィンテージ自転車」`;
 
                 try {
-                    let chatHistory = [];
-                    chatHistory.push({ role: "user", parts: [{ text: promptBase }] });
-                    const payload = { contents: chatHistory };
-                    const apiKey = "AIzaSyCeYtfDAIY3XvgS6jEWEwbuVOS7kct97ro"; // If you want to use models other than gemini-2.0-flash or imagen-3.0-generate-002, provide an API key here. Otherwise, leave this as-is.
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-                    const response = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    const result = await response.json();
-
+                    const result = await callGeminiAPI(promptBase);
                     if (result.candidates && result.candidates.length > 0 &&
                         result.candidates[0].content && result.candidates[0].content.parts &&
                         result.candidates[0].content.parts.length > 0) {
@@ -268,28 +306,15 @@
                 } catch (error) {
                     promptContent = "プロンプトの生成中にエラーが発生しました。";
                     console.error("Error calling Gemini API:", error);
-                } finally {
-                    promptOutput.value = promptContent;
-                    buttonText.textContent = 'プロンプトを作る';
-                    loadingSpinner.classList.add('hidden');
-                    generatePromptBtn.disabled = false;
                 }
 
             } else if (selectedTheme === 'bikkuriman') {
                 promptContent = `あなたは優秀なキャラクターデザイナーです。ビックリマンシール風のオリジナルキャラクター画像を生成してください。画像があれば、それをモデルにしてください。\n・アスペクト比は1:1の正方形\n・2頭身のデフォルメキャラ\n・背景はラメやホログラムのようなキラキラした質感\n・上部に「スライド芸人かわつ」と目立つフォントで表示\n・金色のフレームで囲む\n・全体を80年代風のポップな配色に\n・天使風のデザインで`;
-                promptOutput.value = promptContent;
-                buttonText.textContent = 'プロンプトを作る';
-                loadingSpinner.classList.add('hidden');
-                generatePromptBtn.disabled = false;
             } else if (selectedTheme === 'logoMark') {
                 promptContent = `あなたは優秀なロゴデザイナーです。以下の要件に従って、オリジナルステッカー画像を生成してください。\n・シンプルでスタイリッシュなデザイン\n・金色を基調とした色使い\n・細い輪郭線\n・都会を想像させるイメージ\n・背景は白\n・かっこいい雰囲気\n・「Dai-Nagoya University Network」と大きく文字を中央に表示。文字色は背景色と異なる色`;
-                promptOutput.value = promptContent;
-                buttonText.textContent = 'プロンプトを作る';
-                loadingSpinner.classList.add('hidden');
-                generatePromptBtn.disabled = false;
             } else if (selectedTheme === 'soloTravel') {
                 const destination = destinationSelect.value;
-                const placesToVisit = placesToVisitInput.value.trim(); // 空白チェックのためにtrim()を使用
+                const placesToVisit = placesToVisitInput.value.trim();
 
                 if (!destination) {
                     showMessageBox("目的地を選択してください。");
@@ -300,15 +325,11 @@
                 }
 
                 let placesToVisitPhrase = "";
-                if (placesToVisit) { // 行きたい施設等が空白でない場合のみフレーズを追加
+                if (placesToVisit) {
                     placesToVisitPhrase = `${placesToVisit}には必ず行きたいです。\n`;
                 }
 
                 promptContent = `あなたはプロのツアーコンダクターです。名古屋から${destination}に2泊3日で電車を使い1人旅に行きたいです。旅行プランを考えて、スマートフォンで見やすい形式で旅行の行程を提示してください。表形式にはしないでください。\n${placesToVisitPhrase}他にも近場で観光を楽しめるおすすめの場所があればプランに組み込んでください。\n各日ごとに、移動ルートを必ず記載してください。また、訪問地に対しての注意事項があれば教えて下さい。現地まで飛行機を使うべき場合は飛行機を使ってください。現地での移動で大幅な時間がかかるプランにはしないでください、ハルシネーションはしないでください。`;
-                promptOutput.value = promptContent;
-                buttonText.textContent = 'プロンプトを作る';
-                loadingSpinner.classList.add('hidden');
-                generatePromptBtn.disabled = false;
             } else if (selectedTheme === 'nagoyaLessonPlan') {
                 promptContent = `あなたは優秀な講座コーディーネーターです。
 以下のテーマと内容から講座内容の案を考え、講座タイトル案３つ(タイトル名＋～サブタイトル～)、紹介文（集客力のある魅力的な文章で700文字程度）、タイムテーブル（必ず2時間以内で収まるように）、講師候補者３名（理由も付与）を考えて作成してください、ハルシネーションはしないでください。
@@ -317,31 +338,82 @@
 #内容
 
 `;
-                promptOutput.value = promptContent;
-                buttonText.textContent = 'プロンプトを作る';
-                loadingSpinner.classList.add('hidden');
-                generatePromptBtn.disabled = false;
             }
+
+            promptOutput.value = promptContent;
+            buttonText.textContent = 'プロンプトを作る';
+            loadingSpinner.classList.add('hidden');
+            generatePromptBtn.disabled = false;
         });
 
-        // クリップボードにコピーボタンのクリックイベントリスナー
-        copyToClipboardBtn.addEventListener('click', async () => {
-            if (promptOutput.value) {
-                try {
-                    // 現代的なブラウザでのコピー機能
-                    await navigator.clipboard.writeText(promptOutput.value);
-                    // コピー成功メッセージをポップアップで表示
-                    showMessageBox("プロンプトがクリップボードにコピーされました！");
-                } catch (err) {
-                    // フォールバック: 古いブラウザ用
-                    promptOutput.select();
-                    document.execCommand('copy');
-                    showMessageBox("プロンプトがクリップボードにコピーされました！");
+        // Geminiに送信ボタンのクリックイベントリスナー
+        sendToGeminiBtn.addEventListener('click', async () => {
+            if (!promptOutput.value.trim()) {
+                showMessageBox("送信するプロンプトがありません。");
+                return;
+            }
+
+            sendButtonText.textContent = '送信中...';
+            sendLoadingSpinner.classList.remove('hidden');
+            sendToGeminiBtn.disabled = true;
+
+            try {
+                const prompt = promptOutput.value.trim();
+                const isImageGeneration = prompt.includes('画像を作ってください') || 
+                                        prompt.includes('画像を生成') ||
+                                        themeSelect.value === 'bikkuriman' ||
+                                        themeSelect.value === 'logoMark' ||
+                                        themeSelect.value === 'specifyTheme';
+
+                const result = await callGeminiAPI(prompt, isImageGeneration);
+                
+                if (isImageGeneration) {
+                    // 画像生成の場合
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        
+                        const part = result.candidates[0].content.parts[0];
+                        if (part.inlineData && part.inlineData.data) {
+                            const imageData = part.inlineData.data;
+                            const mimeType = part.inlineData.mimeType || 'image/png';
+                            const imageUrl = `data:${mimeType};base64,${imageData}`;
+                            
+                            responseOutput.innerHTML = `<img src="${imageUrl}" alt="生成された画像" class="response-image">`;
+                            responseContainer.classList.remove('hidden');
+                        } else {
+                            responseOutput.textContent = "画像の生成に失敗しました。";
+                            responseContainer.classList.remove('hidden');
+                        }
+                    } else {
+                        responseOutput.textContent = "画像の生成に失敗しました。";
+                        responseContainer.classList.remove('hidden');
+                    }
+                } else {
+                    // テキスト生成の場合
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        
+                        const responseText = result.candidates[0].content.parts[0].text;
+                        responseOutput.textContent = responseText;
+                        responseContainer.classList.remove('hidden');
+                    } else {
+                        responseOutput.textContent = "応答の取得に失敗しました。";
+                        responseContainer.classList.remove('hidden');
+                        console.error("API response structure unexpected:", result);
+                    }
                 }
-            } else {
-                showMessageBox("コピーするプロンプトがありません。");
+            } catch (error) {
+                responseOutput.textContent = "Geminiへの送信中にエラーが発生しました。";
+                responseContainer.classList.remove('hidden');
+                console.error("Error calling Gemini API:", error);
+            } finally {
+                sendButtonText.textContent = 'Geminiに送信';
+                sendLoadingSpinner.classList.add('hidden');
+                sendToGeminiBtn.disabled = false;
             }
         });
     </script>
 </body>
-</html> 
+</html>
