@@ -1,272 +1,381 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>プロンプト生成アプリ</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Custom styles for Inter font */
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        /* Spinner styles */
-        .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            border-left-color: #3b82f6; /* Blue-500 */
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            vertical-align: middle;
-            margin-right: 8px;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        /* Response image styles */
-        .response-image {
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>プロンプト生成アプリ</title>
+<!-- Tailwind CSS CDN -->
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+/* Custom styles for Inter font */
+body {
+font-family: 'Inter', sans-serif;
+}
+
+/* Spinner styles */
+.spinner {
+border: 4px solid rgba(0, 0, 0, 0.1);
+border-left-color: #3b82f6; /* Blue-500 */
+border-radius: 50%;
+width: 24px;
+height: 24px;
+animation: spin 1s linear infinite;
+display: inline-block;
+vertical-align: middle;
+margin-right: 8px;
+}
+
+@keyframes spin {
+0% { transform: rotate(0deg); }
+100% { transform: rotate(360deg); }
+}
+
+/* Response image styles */
+.response-image {
+max-width: 100%;
+height: auto;
+border-radius: 8px;
+box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+margin: 10px 0;
+}
+
+.response-text {
+white-space: pre-wrap;
+word-wrap: break-word;
+}
+
+.image-container {
+text-align: center;
+margin: 20px 0;
+}
+
+.error-message {
+color: #dc2626;
+background-color: #fee2e2;
+border: 1px solid #fecaca;
+padding: 12px;
+border-radius: 8px;
+margin: 10px 0;
+}
+
+.success-message {
+color: #059669;
+background-color: #d1fae5;
+border: 1px solid #a7f3d0;
+padding: 12px;
+border-radius: 8px;
+margin: 10px 0;
+}
+</style>
 </head>
+
 <body class="bg-gradient-to-br from-blue-100 to-purple-100 min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white p-6 rounded-xl shadow-lg w-full max-w-2xl">
-        <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">プロンプト生成アプリ</h1>
+<div class="bg-white p-6 rounded-xl shadow-lg w-full max-w-2xl">
+<h1 class="text-2xl font-bold text-center text-gray-800 mb-6">プロンプト生成アプリ</h1>
 
-        <!-- テーマ選択コンボボックス -->
-        <div class="mb-4">
-            <label for="themeSelect" class="block text-gray-700 text-sm font-semibold mb-2">テーマを選択:</label>
-            <select id="themeSelect" class="block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out">
-                <option value="specifyTheme">テーマを指定</option>
-                <option value="bikkuriman">ビックリマンシール</option>
-                <option value="logoMark">ロゴマーク</option>
-                <option value="soloTravel">一人旅プラン</option>
-                <option value="nagoyaLessonPlan">大ナゴヤの日授業案</option>
-            </select>
-        </div>
+<!-- テーマ選択コンボボックス -->
+<div class="mb-4">
+<label for="themeSelect" class="block text-gray-700 text-sm font-semibold mb-2">テーマを選択:</label>
+<select id="themeSelect" class="block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out">
+<option value="specifyTheme">テーマを指定</option>
+<option value="bikkuriman">ビックリマンシール</option>
+<option value="logoMark">ロゴマーク</option>
+<option value="soloTravel">一人旅プラン</option>
+<option value="nagoyaLessonPlan">大ナゴヤの日授業案</option>
+</select>
+</div>
 
-        <!-- テーマ指定用一行エディットボックス -->
-        <div class="mb-4" id="themeInputContainer">
-            <label for="customThemeInput" class="block text-gray-700 text-sm font-semibold mb-2">カスタムテーマ (例: 絵画調のふわふわ子猫):</label>
-            <input type="text" id="customThemeInput" class="block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out" placeholder="テーマを入力してください">
-        </div>
+<!-- テーマ指定用一行エディットボックス -->
+<div class="mb-4" id="themeInputContainer">
+<label for="customThemeInput" class="block text-gray-700 text-sm font-semibold mb-2">カスタムテーマ (例: 絵画調のふわふわ子猫):</label>
+<input type="text" id="customThemeInput" class="block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out" placeholder="テーマを入力してください">
+</div>
 
-        <!-- 一人旅プラン用入力フィールド -->
-        <div class="mb-4 hidden" id="soloTravelInputContainer">
-            <div class="mb-4">
-                <label for="destinationSelect" class="block text-gray-700 text-sm font-semibold mb-2">目的地:</label>
-                <select id="destinationSelect" class="block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out">
-                    <!-- 都道府県オプションはJavaScriptで動的に追加されます -->
-                </select>
-            </div>
-            <div class="mb-4">
-                <label for="placesToVisitInput" class="block text-gray-700 text-sm font-semibold mb-2">行きたい施設等:</label>
-                <input type="text" id="placesToVisitInput" class="block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out" placeholder="例: 金閣寺、清水寺">
-            </div>
-        </div>
+<!-- 一人旅プラン用入力フィールド -->
+<div class="mb-4 hidden" id="soloTravelInputContainer">
+<div class="mb-4">
+<label for="destinationSelect" class="block text-gray-700 text-sm font-semibold mb-2">目的地:</label>
+<select id="destinationSelect" class="block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out">
+<!-- 都道府県オプションはJavaScriptで動的に追加されます -->
+</select>
+</div>
+<div class="mb-4">
+<label for="placesToVisitInput" class="block text-gray-700 text-sm font-semibold mb-2">行きたい施設等:</label>
+<input type="text" id="placesToVisitInput" class="block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out" placeholder="例: 金閣寺、清水寺">
+</div>
+</div>
 
-        <!-- プロンプト生成ボタン -->
-        <button id="generatePromptBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 mb-4">
-            <span id="buttonText">プロンプトを作る</span>
-            <span id="loadingSpinner" class="spinner hidden"></span>
-        </button>
+<!-- プロンプト生成ボタン -->
+<button id="generatePromptBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 mb-4">
+<span id="buttonText">プロンプトを作る</span>
+<span id="loadingSpinner" class="spinner hidden"></span>
+</button>
 
-        <!-- 複数行エディットボックス (プロンプト表示用) -->
-        <div class="mb-4">
-            <label for="promptOutput" class="block text-gray-700 text-sm font-semibold mb-2">プロンプト:</label>
-            <textarea id="promptOutput" rows="6" class="block w-full p-3 border border-gray-300 rounded-md shadow-sm bg-gray-50 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out" placeholder="ここにプロンプトが生成されます..."></textarea>
-        </div>
+<!-- 複数行エディットボックス (プロンプト表示用) -->
+<div class="mb-4">
+<label for="promptOutput" class="block text-gray-700 text-sm font-semibold mb-2">プロンプト:</label>
+<textarea id="promptOutput" rows="6" class="block w-full p-3 border border-gray-300 rounded-md shadow-sm bg-gray-50 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out" placeholder="ここにプロンプトが生成されます..."></textarea>
+</div>
 
-        <!-- Geminiに送信ボタン -->
-        <button id="sendToGeminiBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 mb-4">
-            <span id="sendButtonText">Geminiに送信</span>
-            <span id="sendLoadingSpinner" class="spinner hidden"></span>
-        </button>
+<!-- Geminiに送信ボタン -->
+<button id="sendToGeminiBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-md shadow-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 mb-4">
+<span id="sendButtonText">Geminiに送信</span>
+<span id="sendLoadingSpinner" class="spinner hidden"></span>
+</button>
 
-        <!-- Geminiからの応答表示エリア -->
-        <div id="responseContainer" class="mb-4 hidden">
-            <label class="block text-gray-700 text-sm font-semibold mb-2">Geminiからの応答:</label>
-            <div id="responseOutput" class="block w-full p-4 border border-gray-300 rounded-md shadow-sm bg-gray-50 min-h-[200px] whitespace-pre-wrap"></div>
-        </div>
+<!-- Geminiからの応答表示エリア -->
+<div id="responseContainer" class="mb-4 hidden">
+<label class="block text-gray-700 text-sm font-semibold mb-2">Geminiからの応答:</label>
+<div id="responseOutput" class="block w-full p-4 border border-gray-300 rounded-md shadow-sm bg-gray-50 min-h-[200px]"></div>
+</div>
 
-        <!-- メッセージボックス (アラートの代替) -->
-        <div id="messageBox" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
-            <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
-                <p id="messageText" class="text-lg font-semibold text-gray-800 mb-4"></p>
-                <button id="closeMessageBoxBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md transition duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    OK
-                </button>
-            </div>
-        </div>
-    </div>
+<!-- メッセージボックス (アラートの代替) -->
+<div id="messageBox" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
+<div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
+<p id="messageText" class="text-lg font-semibold text-gray-800 mb-4"></p>
+<button id="closeMessageBoxBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md transition duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+OK
+</button>
+</div>
+</div>
+</div>
 
-    <script>
-        // DOM要素の取得
-        const themeSelect = document.getElementById('themeSelect');
-        const customThemeInput = document.getElementById('customThemeInput');
-        const themeInputContainer = document.getElementById('themeInputContainer');
-        const soloTravelInputContainer = document.getElementById('soloTravelInputContainer');
-        const destinationSelect = document.getElementById('destinationSelect');
-        const placesToVisitInput = document.getElementById('placesToVisitInput');
-        const generatePromptBtn = document.getElementById('generatePromptBtn');
-        const buttonText = document.getElementById('buttonText');
-        const loadingSpinner = document.getElementById('loadingSpinner');
-        const promptOutput = document.getElementById('promptOutput');
-        const sendToGeminiBtn = document.getElementById('sendToGeminiBtn');
-        const sendButtonText = document.getElementById('sendButtonText');
-        const sendLoadingSpinner = document.getElementById('sendLoadingSpinner');
-        const responseContainer = document.getElementById('responseContainer');
-        const responseOutput = document.getElementById('responseOutput');
-        const messageBox = document.getElementById('messageBox');
-        const messageText = document.getElementById('messageText');
-        const closeMessageBoxBtn = document.getElementById('closeMessageBoxBtn');
+<script>
+// DOM要素の取得
+const themeSelect = document.getElementById('themeSelect');
+const customThemeInput = document.getElementById('customThemeInput');
+const themeInputContainer = document.getElementById('themeInputContainer');
+const soloTravelInputContainer = document.getElementById('soloTravelInputContainer');
+const destinationSelect = document.getElementById('destinationSelect');
+const placesToVisitInput = document.getElementById('placesToVisitInput');
+const generatePromptBtn = document.getElementById('generatePromptBtn');
+const buttonText = document.getElementById('buttonText');
+const loadingSpinner = document.getElementById('loadingSpinner');
+const promptOutput = document.getElementById('promptOutput');
+const sendToGeminiBtn = document.getElementById('sendToGeminiBtn');
+const sendButtonText = document.getElementById('sendButtonText');
+const sendLoadingSpinner = document.getElementById('sendLoadingSpinner');
+const responseContainer = document.getElementById('responseContainer');
+const responseOutput = document.getElementById('responseOutput');
+const messageBox = document.getElementById('messageBox');
+const messageText = document.getElementById('messageText');
+const closeMessageBoxBtn = document.getElementById('closeMessageBoxBtn');
 
-        // 日本の47都道府県のリスト
-        const prefectures = [
-            "北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県",
-            "茨城県", "栃木県", "群馬県", "埼玉県", "千葉県", "東京都", "神奈川県",
-            "新潟県", "富山県", "石川県", "福井県", "山梨県", "長野県", "岐阜県",
-            "静岡県", "愛知県", "三重県", "滋賀県", "京都府", "大阪府", "兵庫県",
-            "奈良県", "和歌山県", "鳥取県", "島根県", "岡山県", "広島県", "山口県",
-            "徳島県", "香川県", "愛媛県", "高知県", "福岡県", "佐賀県", "長崎県",
-            "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県"
-        ];
+// 日本の47都道府県のリスト
+const prefectures = [
+"北海道", "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県",
+"茨城県", "栃木県", "群馬県", "埼玉県", "千葉県", "東京都", "神奈川県",
+"新潟県", "富山県", "石川県", "福井県", "山梨県", "長野県", "岐阜県",
+"静岡県", "愛知県", "三重県", "滋賀県", "京都府", "大阪府", "兵庫県",
+"奈良県", "和歌山県", "鳥取県", "島根県", "岡山県", "広島県", "山口県",
+"徳島県", "香川県", "愛媛県", "高知県", "福岡県", "佐賀県", "長崎県",
+"熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県"
+];
 
-        // 目的地コンボボックスに都道府県オプションを追加する関数
-        function populatePrefectures() {
-            destinationSelect.innerHTML = '';
-            const defaultOption = document.createElement('option');
-            defaultOption.value = "";
-            defaultOption.textContent = "目的地を選択してください";
-            defaultOption.disabled = true;
-            defaultOption.selected = true;
-            destinationSelect.appendChild(defaultOption);
+// 目的地コンボボックスに都道府県オプションを追加する関数
+function populatePrefectures() {
+destinationSelect.innerHTML = '';
+const defaultOption = document.createElement('option');
+defaultOption.value = "";
+defaultOption.textContent = "目的地を選択してください";
+defaultOption.disabled = true;
+defaultOption.selected = true;
+destinationSelect.appendChild(defaultOption);
 
-            prefectures.forEach(prefecture => {
-                const option = document.createElement('option');
-                option.value = prefecture;
-                option.textContent = prefecture;
-                destinationSelect.appendChild(option);
-            });
-        }
+prefectures.forEach(prefecture => {
+const option = document.createElement('option');
+option.value = prefecture;
+option.textContent = prefecture;
+destinationSelect.appendChild(option);
+});
+}
 
-        // メッセージボックスを表示する関数
-        function showMessageBox(message) {
-            messageText.textContent = message;
-            messageBox.classList.remove('hidden');
-        }
+// メッセージボックスを表示する関数
+function showMessageBox(message) {
+messageText.textContent = message;
+messageBox.classList.remove('hidden');
+}
 
-        // メッセージボックスを閉じる関数
-        closeMessageBoxBtn.addEventListener('click', () => {
-            messageBox.classList.add('hidden');
-        });
+// メッセージボックスを閉じる関数
+closeMessageBoxBtn.addEventListener('click', () => {
+messageBox.classList.add('hidden');
+});
 
-        // テーマ選択の変更イベントリスナー
-        themeSelect.addEventListener('change', () => {
-            themeInputContainer.classList.add('hidden');
-            customThemeInput.disabled = true;
-            soloTravelInputContainer.classList.add('hidden');
-            destinationSelect.disabled = true;
-            placesToVisitInput.disabled = true;
+// テーマ選択の変更イベントリスナー
+themeSelect.addEventListener('change', () => {
+themeInputContainer.classList.add('hidden');
+customThemeInput.disabled = true;
+soloTravelInputContainer.classList.add('hidden');
+destinationSelect.disabled = true;
+placesToVisitInput.disabled = true;
 
-            if (themeSelect.value === 'specifyTheme') {
-                themeInputContainer.classList.remove('hidden');
-                customThemeInput.disabled = false;
-            } else if (themeSelect.value === 'soloTravel') {
-                soloTravelInputContainer.classList.remove('hidden');
-                destinationSelect.disabled = false;
-                placesToVisitInput.disabled = false;
-            }
+if (themeSelect.value === 'specifyTheme') {
+themeInputContainer.classList.remove('hidden');
+customThemeInput.disabled = false;
+} else if (themeSelect.value === 'soloTravel') {
+soloTravelInputContainer.classList.remove('hidden');
+destinationSelect.disabled = false;
+placesToVisitInput.disabled = false;
+}
 
-            promptOutput.value = "";
-            responseContainer.classList.add('hidden');
-            responseOutput.innerHTML = "";
-        });
+promptOutput.value = "";
+responseContainer.classList.add('hidden');
+responseOutput.innerHTML = "";
+});
 
-        // 初期状態を設定
-        populatePrefectures();
-        themeSelect.dispatchEvent(new Event('change'));
+// 初期状態を設定
+populatePrefectures();
+themeSelect.dispatchEvent(new Event('change'));
 
-        // Gemini APIを呼び出す関数
-        async function callGeminiAPI(prompt, isImageGeneration = false) {
-            const apiKey = "AIzaSyCeYtfDAIY3XvgS6jEWEwbuVOS7kct97ro";
-            
-            if (isImageGeneration) {
-                // Gemini Pro Vision APIを使用して画像生成
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
-                const payload = {
-                    contents: [{
-                        parts: [{
-                            text: prompt
-                        }]
-                    }],
-                    generationConfig: {
-                        temperature: 0.7,
-                        topK: 40,
-                        topP: 0.95,
-                        maxOutputTokens: 2048,
-                    }
-                };
-                
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                
-                return await response.json();
-            } else {
-                // テキスト生成APIを使用
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-                const payload = {
-                    contents: [{
-                        parts: [{
-                            text: prompt
-                        }]
-                    }]
-                };
-                
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                
-                return await response.json();
-            }
-        }
+// Base64からBlobに変換する関数
+function base64ToBlob(base64, mimeType) {
+const byteCharacters = atob(base64);
+const byteNumbers = new Array(byteCharacters.length);
+for (let i = 0; i < byteCharacters.length; i++) {
+byteNumbers[i] = byteCharacters.charCodeAt(i);
+}
+const byteArray = new Uint8Array(byteNumbers);
+return new Blob([byteArray], { type: mimeType });
+}
 
-        // プロンプト生成ボタンのクリックイベントリスナー
-        generatePromptBtn.addEventListener('click', async () => {
-            let promptContent = "";
-            const selectedTheme = themeSelect.value;
+// Gemini APIを呼び出す関数（改善版）
+async function callGeminiAPI(prompt, isImageGeneration = false) {
+const apiKey = "AIzaSyCeYtfDAIY3XvgS6jEWEwbuVOS7kct97ro"; // 実際のAPIキーに変更してください
 
-            buttonText.textContent = '生成中...';
-            loadingSpinner.classList.remove('hidden');
-            generatePromptBtn.disabled = true;
+try {
+let apiUrl, payload;
 
-            if (selectedTheme === 'specifyTheme') {
-                const customTheme = customThemeInput.value.trim();
-                if (!customTheme) {
-                    showMessageBox("テーマを指定してください。");
-                    buttonText.textContent = 'プロンプトを作る';
-                    loadingSpinner.classList.add('hidden');
-                    generatePromptBtn.disabled = false;
-                    return;
-                }
-                
-                const promptBase = `Geminiで使用するプロンプトを日本語で１つだけ構築してください。
+if (isImageGeneration) {
+// 画像生成のためのAPIエンドポイント
+apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
+payload = {
+contents: [{
+parts: [{
+text: prompt
+}]
+}],
+generationConfig: {
+temperature: 0.7,
+topK: 40,
+topP: 0.95,
+maxOutputTokens: 8192,
+}
+};
+} else {
+// テキスト生成のためのAPIエンドポイント
+apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+payload = {
+contents: [{
+parts: [{
+text: prompt
+}]
+}],
+generationConfig: {
+temperature: 0.7,
+topK: 40,
+topP: 0.95,
+maxOutputTokens: 8192,
+}
+};
+}
+
+const response = await fetch(apiUrl, {
+method: 'POST',
+headers: {
+'Content-Type': 'application/json',
+},
+body: JSON.stringify(payload)
+});
+
+if (!response.ok) {
+const errorData = await response.json();
+throw new Error(`API Error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+}
+
+return await response.json();
+} catch (error) {
+console.error('Gemini API Error:', error);
+throw error;
+}
+}
+
+// 応答を表示する関数
+function displayResponse(result, isImageGeneration = false) {
+responseOutput.innerHTML = '';
+
+if (!result.candidates || result.candidates.length === 0) {
+responseOutput.innerHTML = '<div class="error-message">応答が取得できませんでした。</div>';
+return;
+}
+
+const candidate = result.candidates[0];
+if (!candidate.content || !candidate.content.parts || candidate.content.parts.length === 0) {
+responseOutput.innerHTML = '<div class="error-message">応答の内容が空です。</div>';
+return;
+}
+
+let hasContent = false;
+
+candidate.content.parts.forEach((part, index) => {
+if (part.text) {
+// テキスト応答の表示
+const textDiv = document.createElement('div');
+textDiv.className = 'response-text';
+textDiv.textContent = part.text;
+responseOutput.appendChild(textDiv);
+hasContent = true;
+}
+
+if (part.inlineData && part.inlineData.data) {
+// 画像応答の表示
+const imageContainer = document.createElement('div');
+imageContainer.className = 'image-container';
+
+const img = document.createElement('img');
+const mimeType = part.inlineData.mimeType || 'image/png';
+const imageUrl = `data:${mimeType};base64,${part.inlineData.data}`;
+img.src = imageUrl;
+img.alt = '生成された画像';
+img.className = 'response-image';
+
+imageContainer.appendChild(img);
+responseOutput.appendChild(imageContainer);
+hasContent = true;
+}
+});
+
+if (!hasContent) {
+responseOutput.innerHTML = '<div class="error-message">表示可能なコンテンツがありませんでした。</div>';
+}
+
+responseContainer.classList.remove('hidden');
+}
+
+// プロンプト生成ボタンのクリックイベントリスナー
+generatePromptBtn.addEventListener('click', async () => {
+let promptContent = "";
+const selectedTheme = themeSelect.value;
+
+buttonText.textContent = '生成中...';
+loadingSpinner.classList.remove('hidden');
+generatePromptBtn.disabled = true;
+
+try {
+if (selectedTheme === 'specifyTheme') {
+const customTheme = customThemeInput.value.trim();
+if (!customTheme) {
+showMessageBox("テーマを指定してください。");
+return;
+}
+
+const promptBase = `Geminiで使用するプロンプトを日本語で１つだけ構築してください。
 テーマは「${customTheme}」で、キャラクターの表情や仕草は場の雰囲気に合わせて考えて作ってください。また、クオリティプロンプトや臨場感を強く出せるようなプロンプト構成にして。
 強調構文を抜くこと。毎回バリエーションや様々な方向性で作ること、
+
 ただし、以下のプロンプトガイドを意識して完成版のプロンプトを作ること。プロンプトは冒頭に「以下の画像を作ってください。テーマは「${customTheme}」サイズは正方形。」と入れて、
+
 下記のフォーマットに従って適切に分割してください。余計な案内文などは入れないでください。
+
 #明確な対象物
 
 #動作や雰囲気
@@ -282,149 +391,142 @@
 【プロンプトガイド】
 1. 明確な対象物を指定する（上記で入力したテーマ）
 まず、何を描きたいのかを明確に定義しましょう。人物、物体、風景など、具体的に指定します。
- 例：「ヴィンテージ自転車」
+例：「ヴィンテージ自転車」
+
 2. 動作や雰囲気を追加する
 対象物に動きや感情を加えることで、より生き生きとした画像になります。
- 例：「丘を下るヴィンテージ自転車」または「懐かしさを感じるヴィンテージ自転車」
+例：「丘を下るヴィンテージ自転車」または「懐かしさを感じるヴィンテージ自転車」
+
 3. 場面設定を行う
 環境の詳細（色、質感、照明、天候など）を記述します。
- 例：「晴れた田園風景の中で丘を下るヴィンテージ自転車」
+例：「晴れた田園風景の中で丘を下るヴィンテージ自転車」
+
 4. 重要な詳細を強調する
 被写体や製品を強調するために、服装、小道具、特徴などの重要な要素を強調します。
- 例：「晴れた田園風景の中で丘を下る、光沢のある赤いフレームと昔ながらの革製シートを持つヴィンテージ自転車」
+例：「晴れた田園風景の中で丘を下る、光沢のある赤いフレームと昔ながらの革製シートを持つヴィンテージ自転車」
+
 5. スタイルを選択する
 写真のようなリアルなスタイルやアニメ風など、希望する表現スタイルを指定します。
- 例：「フォトリアリスティックなスタイルで描かれた、晴れた田園風景の中で丘を下る、光沢のある赤いフレームと昔ながらの革製シートを持つヴィンテージ自転車」
+例：「フォトリアリスティックなスタイルで描かれた、晴れた田園風景の中で丘を下る、光沢のある赤いフレームと昔ながらの革製シートを持つヴィンテージ自転車」
+
 6. 視覚効果を追加する（完成版）
 照明、深度、特殊効果などを追加して構図を強化します。
- 例：「黄金の日差しの下で輝き、後ろにほこりを引きながら、晴れた田園風景の中で丘を下る、光沢のある赤いフレームと昔ながらの革製シートを持つヴィンテージ自転車」`;
+例：「黄金の日差しの下で輝き、後ろにほこりを引きながら、晴れた田園風景の中で丘を下る、光沢のある赤いフレームと昔ながらの革製シートを持つヴィンテージ自転車」`;
 
-                try {
-                    const result = await callGeminiAPI(promptBase);
-                    if (result.candidates && result.candidates.length > 0 &&
-                        result.candidates[0].content && result.candidates[0].content.parts &&
-                        result.candidates[0].content.parts.length > 0) {
-                        promptContent = result.candidates[0].content.parts[0].text;
-                    } else {
-                        promptContent = "プロンプトの生成に失敗しました。";
-                        console.error("API response structure unexpected:", result);
-                    }
-                } catch (error) {
-                    promptContent = "プロンプトの生成中にエラーが発生しました。";
-                    console.error("Error calling Gemini API:", error);
-                }
+const result = await callGeminiAPI(promptBase);
+if (result.candidates && result.candidates.length > 0 &&
+result.candidates[0].content && result.candidates[0].content.parts &&
+result.candidates[0].content.parts.length > 0) {
+promptContent = result.candidates[0].content.parts[0].text;
+} else {
+promptContent = "プロンプトの生成に失敗しました。";
+}
 
-            } else if (selectedTheme === 'bikkuriman') {
-                promptContent = `あなたは優秀なキャラクターデザイナーです。ビックリマンシール風のオリジナルキャラクター画像を生成してください。画像があれば、それをモデルにしてください。\n・アスペクト比は1:1の正方形\n・2頭身のデフォルメキャラ\n・背景はラメやホログラムのようなキラキラした質感\n・上部に「スライド芸人かわつ」と目立つフォントで表示\n・金色のフレームで囲む\n・全体を80年代風のポップな配色に\n・天使風のデザインで`;
-            } else if (selectedTheme === 'logoMark') {
-                promptContent = `あなたは優秀なロゴデザイナーです。以下の要件に従って、オリジナルステッカー画像を生成してください。\n・シンプルでスタイリッシュなデザイン\n・金色を基調とした色使い\n・細い輪郭線\n・都会を想像させるイメージ\n・背景は白\n・かっこいい雰囲気\n・「Dai-Nagoya University Network」と大きく文字を中央に表示。文字色は背景色と異なる色`;
-            } else if (selectedTheme === 'soloTravel') {
-                const destination = destinationSelect.value;
-                const placesToVisit = placesToVisitInput.value.trim();
+} else if (selectedTheme === 'bikkuriman') {
+promptContent = `あなたは優秀なキャラクターデザイナーです。ビックリマンシール風のオリジナルキャラクター画像を生成してください。画像があれば、それをモデルにしてください。
+・アスペクト比は1:1の正方形
+・2頭身のデフォルメキャラ
+・背景はラメやホログラムのようなキラキラした質感
+・上部に「スライド芸人かわつ」と目立つフォントで表示
+・金色のフレームで囲む
+・全体を80年代風のポップな配色に
+・天使風のデザインで`;
 
-                if (!destination) {
-                    showMessageBox("目的地を選択してください。");
-                    buttonText.textContent = 'プロンプトを作る';
-                    loadingSpinner.classList.add('hidden');
-                    generatePromptBtn.disabled = false;
-                    return;
-                }
+} else if (selectedTheme === 'logoMark') {
+promptContent = `あなたは優秀なロゴデザイナーです。以下の要件に従って、オリジナルステッカー画像を生成してください。
+・シンプルでスタイリッシュなデザイン
+・金色を基調とした色使い
+・細い輪郭線
+・都会を想像させるイメージ
+・背景は白
+・かっこいい雰囲気
+・「Dai-Nagoya University Network」と大きく文字を中央に表示。文字色は背景色と異なる色`;
 
-                let placesToVisitPhrase = "";
-                if (placesToVisit) {
-                    placesToVisitPhrase = `${placesToVisit}には必ず行きたいです。\n`;
-                }
+} else if (selectedTheme === 'soloTravel') {
+const destination = destinationSelect.value;
+const placesToVisit = placesToVisitInput.value.trim();
 
-                promptContent = `あなたはプロのツアーコンダクターです。名古屋から${destination}に2泊3日で電車を使い1人旅に行きたいです。旅行プランを考えて、スマートフォンで見やすい形式で旅行の行程を提示してください。表形式にはしないでください。\n${placesToVisitPhrase}他にも近場で観光を楽しめるおすすめの場所があればプランに組み込んでください。\n各日ごとに、移動ルートを必ず記載してください。また、訪問地に対しての注意事項があれば教えて下さい。現地まで飛行機を使うべき場合は飛行機を使ってください。現地での移動で大幅な時間がかかるプランにはしないでください、ハルシネーションはしないでください。`;
-            } else if (selectedTheme === 'nagoyaLessonPlan') {
-                promptContent = `あなたは優秀な講座コーディーネーターです。
+if (!destination) {
+showMessageBox("目的地を選択してください。");
+return;
+}
+
+let placesToVisitPhrase = "";
+if (placesToVisit) {
+placesToVisitPhrase = `${placesToVisit}には必ず行きたいです。\n`;
+}
+
+promptContent = `あなたはプロのツアーコンダクターです。名古屋から${destination}に2泊3日で電車を使い1人旅に行きたいです。旅行プランを考えて、スマートフォンで見やすい形式で旅行の行程を提示してください。表形式にはしないでください。
+${placesToVisitPhrase}他にも近場で観光を楽しめるおすすめの場所があればプランに組み込んでください。
+各日ごとに、移動ルートを必ず記載してください。また、訪問地に対しての注意事項があれば教えて下さい。現地まで飛行機を使うべき場合は飛行機を使ってください。現地での移動で大幅な時間がかかるプランにはしないでください、ハルシネーションはしないでください。`;
+
+} else if (selectedTheme === 'nagoyaLessonPlan') {
+promptContent = `あなたは優秀な講座コーディーネーターです。
+
 以下のテーマと内容から講座内容の案を考え、講座タイトル案３つ(タイトル名＋～サブタイトル～)、紹介文（集客力のある魅力的な文章で700文字程度）、タイムテーブル（必ず2時間以内で収まるように）、講師候補者３名（理由も付与）を考えて作成してください、ハルシネーションはしないでください。
+
 #テーマ
 
 #内容
 
 `;
-            }
+}
 
-            promptOutput.value = promptContent;
-            buttonText.textContent = 'プロンプトを作る';
-            loadingSpinner.classList.add('hidden');
-            generatePromptBtn.disabled = false;
-        });
+promptOutput.value = promptContent;
 
-        // Geminiに送信ボタンのクリックイベントリスナー
-        sendToGeminiBtn.addEventListener('click', async () => {
-            if (!promptOutput.value.trim()) {
-                showMessageBox("送信するプロンプトがありません。");
-                return;
-            }
+} catch (error) {
+promptOutput.value = "プロンプトの生成中にエラーが発生しました: " + error.message;
+console.error("Error generating prompt:", error);
+} finally {
+buttonText.textContent = 'プロンプトを作る';
+loadingSpinner.classList.add('hidden');
+generatePromptBtn.disabled = false;
+}
+});
 
-            sendButtonText.textContent = '送信中...';
-            sendLoadingSpinner.classList.remove('hidden');
-            sendToGeminiBtn.disabled = true;
+// Geminiに送信ボタンのクリックイベントリスナー
+sendToGeminiBtn.addEventListener('click', async () => {
+if (!promptOutput.value.trim()) {
+showMessageBox("送信するプロンプトがありません。");
+return;
+}
 
-            try {
-                const prompt = promptOutput.value.trim();
-                const isImageGeneration = prompt.includes('画像を作ってください') || 
-                                        prompt.includes('画像を生成') ||
-                                        prompt.includes('画像') ||
-                                        themeSelect.value === 'bikkuriman' ||
-                                        themeSelect.value === 'logoMark' ||
-                                        themeSelect.value === 'specifyTheme';
+sendButtonText.textContent = '送信中...';
+sendLoadingSpinner.classList.remove('hidden');
+sendToGeminiBtn.disabled = true;
 
-                const result = await callGeminiAPI(prompt, isImageGeneration);
-                
-                if (isImageGeneration) {
-                    // 画像生成の場合
-                    if (result.candidates && result.candidates.length > 0 &&
-                        result.candidates[0].content && result.candidates[0].content.parts &&
-                        result.candidates[0].content.parts.length > 0) {
-                        
-                        const part = result.candidates[0].content.parts[0];
-                        if (part.inlineData && part.inlineData.data) {
-                            const imageData = part.inlineData.data;
-                            const mimeType = part.inlineData.mimeType || 'image/png';
-                            const imageUrl = `data:${mimeType};base64,${imageData}`;
-                            
-                            responseOutput.innerHTML = `<img src="${imageUrl}" alt="生成された画像" class="response-image">`;
-                            responseContainer.classList.remove('hidden');
-                        } else if (part.text) {
-                            // テキストレスポンスの場合（画像生成の説明など）
-                            responseOutput.textContent = part.text;
-                            responseContainer.classList.remove('hidden');
-                        } else {
-                            responseOutput.textContent = "画像の生成に失敗しました。APIレスポンス: " + JSON.stringify(result, null, 2);
-                            responseContainer.classList.remove('hidden');
-                        }
-                    } else {
-                        responseOutput.textContent = "画像の生成に失敗しました。APIレスポンス: " + JSON.stringify(result, null, 2);
-                        responseContainer.classList.remove('hidden');
-                    }
-                } else {
-                    // テキスト生成の場合
-                    if (result.candidates && result.candidates.length > 0 &&
-                        result.candidates[0].content && result.candidates[0].content.parts &&
-                        result.candidates[0].content.parts.length > 0) {
-                        
-                        const responseText = result.candidates[0].content.parts[0].text;
-                        responseOutput.textContent = responseText;
-                        responseContainer.classList.remove('hidden');
-                    } else {
-                        responseOutput.textContent = "応答の取得に失敗しました。";
-                        responseContainer.classList.remove('hidden');
-                        console.error("API response structure unexpected:", result);
-                    }
-                }
-            } catch (error) {
-                responseOutput.textContent = "Geminiへの送信中にエラーが発生しました: " + error.message;
-                responseContainer.classList.remove('hidden');
-                console.error("Error calling Gemini API:", error);
-            } finally {
-                sendButtonText.textContent = 'Geminiに送信';
-                sendLoadingSpinner.classList.add('hidden');
-                sendToGeminiBtn.disabled = false;
-            }
-        });
-    </script>
+try {
+const prompt = promptOutput.value.trim();
+
+// 画像生成の判定を改善
+const isImageGeneration = prompt.includes('画像を作ってください') ||
+prompt.includes('画像を生成') ||
+prompt.includes('画像') ||
+prompt.includes('イラスト') ||
+prompt.includes('写真') ||
+prompt.includes('描い') ||
+prompt.includes('デザイン') ||
+themeSelect.value === 'bikkuriman' ||
+themeSelect.value === 'logoMark' ||
+themeSelect.value === 'specifyTheme';
+
+console.log('Sending to Gemini:', { prompt, isImageGeneration });
+
+const result = await callGeminiAPI(prompt, isImageGeneration);
+console.log('Gemini response:', result);
+
+displayResponse(result, isImageGeneration);
+
+} catch (error) {
+responseOutput.innerHTML = `<div class="error-message">Geminiへの送信中にエラーが発生しました: ${error.message}</div>`;
+responseContainer.classList.remove('hidden');
+console.error("Error calling Gemini API:", error);
+} finally {
+sendButtonText.textContent = 'Geminiに送信';
+sendLoadingSpinner.classList.add('hidden');
+sendToGeminiBtn.disabled = false;
+}
+});
+</script>
 </body>
 </html>
