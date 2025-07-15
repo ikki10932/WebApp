@@ -199,14 +199,20 @@
             const apiKey = "AIzaSyCeYtfDAIY3XvgS6jEWEwbuVOS7kct97ro";
             
             if (isImageGeneration) {
-                // Imagen APIを使用
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:generateContent?key=${apiKey}`;
+                // Gemini Pro Vision APIを使用して画像生成
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
                 const payload = {
                     contents: [{
                         parts: [{
                             text: prompt
                         }]
-                    }]
+                    }],
+                    generationConfig: {
+                        temperature: 0.7,
+                        topK: 40,
+                        topP: 0.95,
+                        maxOutputTokens: 2048,
+                    }
                 };
                 
                 const response = await fetch(apiUrl, {
@@ -361,6 +367,7 @@
                 const prompt = promptOutput.value.trim();
                 const isImageGeneration = prompt.includes('画像を作ってください') || 
                                         prompt.includes('画像を生成') ||
+                                        prompt.includes('画像') ||
                                         themeSelect.value === 'bikkuriman' ||
                                         themeSelect.value === 'logoMark' ||
                                         themeSelect.value === 'specifyTheme';
@@ -381,12 +388,16 @@
                             
                             responseOutput.innerHTML = `<img src="${imageUrl}" alt="生成された画像" class="response-image">`;
                             responseContainer.classList.remove('hidden');
+                        } else if (part.text) {
+                            // テキストレスポンスの場合（画像生成の説明など）
+                            responseOutput.textContent = part.text;
+                            responseContainer.classList.remove('hidden');
                         } else {
-                            responseOutput.textContent = "画像の生成に失敗しました。";
+                            responseOutput.textContent = "画像の生成に失敗しました。APIレスポンス: " + JSON.stringify(result, null, 2);
                             responseContainer.classList.remove('hidden');
                         }
                     } else {
-                        responseOutput.textContent = "画像の生成に失敗しました。";
+                        responseOutput.textContent = "画像の生成に失敗しました。APIレスポンス: " + JSON.stringify(result, null, 2);
                         responseContainer.classList.remove('hidden');
                     }
                 } else {
@@ -405,7 +416,7 @@
                     }
                 }
             } catch (error) {
-                responseOutput.textContent = "Geminiへの送信中にエラーが発生しました。";
+                responseOutput.textContent = "Geminiへの送信中にエラーが発生しました: " + error.message;
                 responseContainer.classList.remove('hidden');
                 console.error("Error calling Gemini API:", error);
             } finally {
